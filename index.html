@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Member List - KNX Style</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r121/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vanta@latest/dist/vanta.net.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        #vanta-canvas { position: fixed; width: 100%; height: 100vh; top: 0; left: 0; z-index: -1; }
+        .glass { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); }
+    </style>
+</head>
+<body class="text-white font-sans">
+    <div id="vanta-canvas"></div>
+
+    <div class="container mx-auto px-4 py-12 relative z-10">
+        <h1 class="text-5xl font-black text-center mb-12 tracking-tighter uppercase italic">MEMBER <span class="text-blue-500">- KNX</span></h1>
+
+        <div id="member-container" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6">
+            </div>
+
+        <div class="mt-12 flex justify-center items-center space-x-4">
+            <button onclick="changePage(-1)" class="glass px-6 py-2 rounded-full hover:bg-blue-600 transition">Prev</button>
+            <span id="page-info" class="text-lg font-bold">หน้า 1 / 1</span>
+            <button onclick="changePage(1)" class="glass px-6 py-2 rounded-full hover:bg-blue-600 transition">Next</button>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+        // ใส่ Config ของ Firebase คุณที่นี่
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            databaseURL: "YOUR_DATABASE_URL",
+            projectId: "YOUR_PROJECT_ID",
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        let allMembers = [];
+        let currentPage = 1;
+        const itemsPerPage = 20;
+
+        // ดึงข้อมูล Realtime
+        onValue(ref(db, 'members'), (snapshot) => {
+            const data = snapshot.val();
+            allMembers = data ? Object.values(data) : [];
+            renderMembers();
+        });
+
+        function renderMembers() {
+            const container = document.getElementById('member-container');
+            container.innerHTML = '';
+            
+            const start = (currentPage - 1) * itemsPerPage;
+            const end = start + itemsPerPage;
+            const paginatedItems = allMembers.slice(start, end);
+
+            paginatedItems.forEach(m => {
+                container.innerHTML += `
+                    <div class="glass p-6 rounded-2xl text-center transform hover:scale-105 transition duration-300">
+                        <div class="w-20 h-20 mx-auto mb-4 rounded-full border-2 border-blue-500 p-1">
+                            <img src="${m.img || 'https://via.placeholder.com/150'}" class="w-full h-full rounded-full object-cover">
+                        </div>
+                        <h3 class="font-bold text-lg mb-3 truncate">${m.name}</h3>
+                        <a href="${m.facebook}" target="_blank" class="text-2xl text-blue-400 hover:text-white transition">
+                            <i class="fab fa-facebook"></i>
+                        </a>
+                    </div>
+                `;
+            });
+
+            document.getElementById('page-info').innerText = `หน้า ${currentPage} / ${Math.ceil(allMembers.length / itemsPerPage) || 1}`;
+        }
+
+        window.changePage = (step) => {
+            const maxPage = Math.ceil(allMembers.length / itemsPerPage);
+            currentPage = Math.max(1, Math.min(maxPage, currentPage + step));
+            renderMembers();
+        };
+
+        // สั่งให้ BG ขยับ
+        VANTA.NET({
+            el: "#vanta-canvas",
+            mouseControls: true,
+            touchControls: true,
+            gyroControls: false,
+            minHeight: 200.00,
+            minWidth: 200.00,
+            scale: 1.00,
+            scaleMobile: 1.00,
+            color: 0x3f51b5,
+            backgroundColor: 0x0a0a0a,
+            points: 12.00,
+            maxDistance: 24.00,
+            spacing: 16.00
+        });
+    </script>
+</body>
+</html>
