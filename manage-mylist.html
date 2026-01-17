@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin System - AWAKE 2K26</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-database-compat.js"></script>
+</head>
+<body class="admin-page">
+    <div class="admin-container">
+        <h2>จัดการรายชื่อ (หลังบ้าน)</h2>
+        
+        <div class="form-group">
+            <input type="text" id="name" placeholder="ชื่อสมาชิก">
+            <select id="rank">
+                <option value="FOUNDER">FOUNDER</option>
+                <option value="LEADER">LEADER</option>
+                <option value="SUPPORT">SUPPORT</option>
+                <option value="MEMBER">MEMBER</option>
+            </select>
+            <input type="text" id="fb" placeholder="ลิงก์ Facebook">
+            <button onclick="saveMember()" class="add-btn">เพิ่ม/อัปเดตข้อมูล</button>
+        </div>
+
+        <table style="width:100%; color:white; margin-top:20px;">
+            <thead>
+                <tr style="text-align:left;">
+                    <th>ชื่อ</th>
+                    <th>ยศ</th>
+                    <th>จัดการ</th>
+                </tr>
+            </thead>
+            <tbody id="admin-list"></tbody>
+        </table>
+    </div>
+
+    <script>
+        // --- ใส่ Firebase Config ตัวเดียวกับข้างบน ---
+        const firebaseConfig = { /* ก๊อปปี้จากไฟล์ index.html มาใส่ตรงนี้ */ };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        function saveMember() {
+            const name = document.getElementById('name').value;
+            const rank = document.getElementById('rank').value;
+            const facebook = document.getElementById('fb').value;
+
+            if(!name || !facebook) return alert("กรุณากรอกข้อมูล");
+
+            // บันทึกลง Firebase
+            db.ref('members').push({ name, rank, facebook });
+            alert("เพิ่มเรียบร้อย!");
+        }
+
+        db.ref('members').on('value', (snapshot) => {
+            const data = snapshot.val();
+            const list = document.getElementById('admin-list');
+            list.innerHTML = "";
+            if(data) {
+                Object.keys(data).forEach(key => {
+                    const m = data[key];
+                    list.innerHTML += `
+                        <tr>
+                            <td>${m.name}</td>
+                            <td>${m.rank}</td>
+                            <td><button onclick="deleteMember('${key}')" class="del-btn">ลบ</button></td>
+                        </tr>
+                    `;
+                });
+            }
+        });
+
+        function deleteMember(id) {
+            if(confirm('ยืนยันการลบ?')) db.ref('members/' + id).remove();
+        }
+    </script>
+</body>
+</html>
