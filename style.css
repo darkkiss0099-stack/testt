@@ -1,0 +1,130 @@
+/* พื้นฐาน */
+body {
+    background-color: #0a0a0a;
+    color: white;
+    font-family: 'Kanit', sans-serif;
+    margin: 0;
+    padding: 0;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 50px 20px;
+    text-align: center;
+}
+
+header h1 {
+    font-size: 3rem;
+    letter-spacing: 5px;
+    margin-bottom: 5px;
+}
+
+header p {
+    color: #888;
+    font-size: 14px;
+}
+
+/* แถบค้นหา */
+.search-bar {
+    margin: 30px 0;
+}
+
+.search-bar input {
+    background: #151515;
+    border: 1px solid #333;
+    padding: 10px 20px;
+    border-radius: 20px 0 0 20px;
+    color: white;
+    width: 250px;
+}
+
+.search-bar button {
+    background: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 0 20px 20px 0;
+    cursor: pointer;
+}
+
+/* การจัดวาง Card */
+.member-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 25px;
+    margin-top: 40px;
+}
+
+/* ตัว Card */
+.card {
+    background: #111;
+    border: 1px solid #222;
+    border-radius: 25px;
+    padding: 40px 20px 25px;
+    position: relative;
+    transition: transform 0.3s;
+}
+
+.card:hover {
+    transform: translateY(-10px);
+    border-color: #444;
+}
+
+/* ป้ายยศ (Badge ด้านบน) */
+.rank-badge {
+    position: absolute;
+    top: -12px;
+    right: 15px;
+    padding: 5px 15px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: bold;
+}
+
+.badge-founder { background: #ffbc00; color: #000; box-shadow: 0 0 10px rgba(255, 188, 0, 0.4); }
+.badge-leader { background: #ff4141; color: #fff; }
+.badge-support { background: #8e44ad; color: #fff; }
+.badge-member { background: #3498db; color: #fff; }
+
+/* รูปโปรไฟล์ */
+.profile-box img {
+    width: 90px;
+    height: 90px;
+    border-radius: 25px;
+    border: 2px solid #333;
+    margin-bottom: 15px;
+}
+
+/* ข้อความใน Card */
+.info h3 { margin: 10px 0 5px; font-size: 18px; }
+
+.rank-label { font-size: 12px; font-weight: bold; margin-bottom: 20px; }
+.label-founder { color: #ffbc00; }
+.label-leader { color: #ff4141; }
+.label-support { color: #8e44ad; }
+
+/* ปุ่ม Facebook */
+.fb-link {
+    display: block;
+    background: #1a1a1a;
+    color: #eee;
+    text-decoration: none;
+    padding: 12px;
+    border-radius: 12px;
+    border: 1px solid #333;
+    font-size: 14px;
+    transition: 0.3s;
+}
+
+.fb-link:hover {
+    background: #3b5998;
+    border-color: #3b5998;
+}
+
+/* หน้า Admin */
+.admin-container { max-width: 600px; margin: 50px auto; background: #1a1a1a; padding: 30px; border-radius: 20px; }
+.form-group input, .form-group select { display: block; width: 100%; margin: 10px 0; padding: 10px; background: #000; border: 1px solid #333; color: white; }
+.add-btn { width: 100%; padding: 10px; background: #27ae60; border: none; color: white; cursor: pointer; }
+table { width: 100%; margin-top: 20px; border-collapse: collapse; }
+th, td { padding: 10px; border-bottom: 1px solid #333; text-align: left; }
+.del-btn { background: #c0392b; color: white; border: none; padding: 5px 10px; cursor: pointer; }
