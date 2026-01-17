@@ -2,76 +2,76 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <title>GANG ADMIN PANEL</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Manage Members</title>
+    <link rel="stylesheet" href="style.css">
 </head>
-<body class="bg-gray-900 text-white p-8">
-    <div class="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-10">
+<body class="admin-page">
+    <div class="admin-container">
+        <h2>ระบบจัดการสมาชิก</h2>
+        <a href="index.html">กลับหน้าหลัก</a>
         
-        <div class="bg-gray-800 p-6 rounded-xl shadow-2xl">
-            <h2 class="text-2xl font-bold mb-6 text-blue-400">ADD / EDIT MEMBER</h2>
-            <div class="space-y-4">
-                <input id="m-name" type="text" placeholder="ชื่อเล่น / ฉายา" class="w-full bg-gray-700 p-3 rounded">
-                <input id="m-fb" type="text" placeholder="Link Facebook" class="w-full bg-gray-700 p-3 rounded">
-                <input id="m-img" type="text" placeholder="Link รูปภาพ (URL)" class="w-full bg-gray-700 p-3 rounded">
-                <button onclick="saveMember()" class="w-full bg-blue-600 hover:bg-blue-700 py-3 rounded font-bold">SAVE MEMBER</button>
-            </div>
-
-            <hr class="my-8 border-gray-700">
-            
-            <h2 class="text-xl font-bold mb-4">MUSIC SETTING</h2>
-            <input id="music-url" type="text" placeholder="YouTube Link (เช่น https://www.youtube.com/watch?v=...)" class="w-full bg-gray-700 p-3 rounded mb-2">
-            <button onclick="saveMusic()" class="w-full bg-red-600 hover:bg-red-700 py-2 rounded font-bold">UPDATE MUSIC</button>
+        <div class="form-group">
+            <input type="text" id="name" placeholder="ชื่อ-นามสกุล">
+            <select id="rank">
+                <option value="FOUNDER">FOUNDER</option>
+                <option value="LEADER">LEADER</option>
+                <option value="SUPPORT">SUPPORT</option>
+                <option value="MEMBER">MEMBER</option>
+            </select>
+            <input type="text" id="fb" placeholder="ลิงก์ Facebook (เช่น https://facebook.com/...)">
+            <button onclick="addMember()" class="add-btn">เพิ่มสมาชิก</button>
         </div>
 
-        <div class="bg-gray-800 p-6 rounded-xl shadow-2xl">
-            <h2 class="text-2xl font-bold mb-6">MEMBER LIST</h2>
-            <div id="admin-list" class="space-y-3 overflow-y-auto max-h-[500px]"></div>
-        </div>
+        <hr>
+
+        <table id="admin-table">
+            <thead>
+                <tr>
+                    <th>ชื่อ</th>
+                    <th>ยศ</th>
+                    <th>จัดการ</th>
+                </tr>
+            </thead>
+            <tbody id="admin-list"></tbody>
+        </table>
     </div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getDatabase, ref, set, push, onValue, remove } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
-
-        const firebaseConfig = { /* ใช้ Config เดียวกันกับ index.html */ };
-        const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app);
-
-        // บันทึกสมาชิก
-        window.saveMember = () => {
-            const name = document.getElementById('m-name').value;
-            const facebook = document.getElementById('m-fb').value;
-            const img = document.getElementById('m-img').value;
-            if(name) {
-                const newRef = push(ref(db, 'members'));
-                set(newRef, { id: newRef.key, name, facebook, img });
-                alert("เพิ่มรายชื่อสำเร็จ!");
-            }
-        };
-
-        // บันทึกเพลง
-        window.saveMusic = () => {
-            const url = document.getElementById('music-url').value;
-            set(ref(db, 'settings/musicUrl'), url);
-            alert("อัปเดตเพลงแล้ว!");
-        };
-
-        // แสดงรายชื่อพร้อมปุ่มลบ
-        onValue(ref(db, 'members'), (snapshot) => {
+    <script>
+        function loadAdminList() {
+            const members = JSON.parse(localStorage.getItem('awake_members')) || [];
             const list = document.getElementById('admin-list');
-            list.innerHTML = '';
-            snapshot.forEach(child => {
-                const m = child.val();
-                list.innerHTML += `
-                    <div class="flex justify-between items-center bg-gray-700 p-3 rounded">
-                        <span>${m.name}</span>
-                        <button onclick="del('${m.id}')" class="text-red-400 hover:text-red-200">DELETE</button>
-                    </div>`;
-            });
-        });
+            list.innerHTML = members.map((m, index) => `
+                <tr>
+                    <td>${m.name}</td>
+                    <td>${m.rank}</td>
+                    <td><button onclick="deleteMember(${index})" class="del-btn">ลบ</button></td>
+                </tr>
+            `).join('');
+        }
 
-        window.del = (id) => { if(confirm('ลบรายชื่อนี้ใช่ไหม?')) remove(ref(db, `members/${id}`)); };
+        function addMember() {
+            const name = document.getElementById('name').value;
+            const rank = document.getElementById('rank').value;
+            const facebook = document.getElementById('fb').value;
+
+            if(!name || !facebook) return alert("กรุณากรอกข้อมูลให้ครบ");
+
+            let members = JSON.parse(localStorage.getItem('awake_members')) || [];
+            members.push({ name, rank, facebook });
+            localStorage.setItem('awake_members', JSON.stringify(members));
+            
+            location.reload();
+        }
+
+        function deleteMember(index) {
+            let members = JSON.parse(localStorage.getItem('awake_members')) || [];
+            members.splice(index, 1);
+            localStorage.setItem('awake_members', JSON.stringify(members));
+            loadAdminList();
+        }
+
+        window.onload = loadAdminList;
     </script>
 </body>
 </html>
