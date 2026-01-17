@@ -3,13 +3,42 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AWAKE 2K26 - Member List</title>
+    <title>AWAKE 2K26 - Member List & Management</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-database-compat.js"></script>
+    <style>
+        /* สไตล์เพิ่มเติมสำหรับระบบ DEV */
+        .dev-controls { text-align: right; padding: 10px; }
+        .btn-dev { background: #333; color: #00ff00; border: 1px solid #00ff00; padding: 5px 15px; cursor: pointer; border-radius: 5px; font-family: monospace; }
+        
+        /* Modal Style (ตามรูปตัวอย่าง) */
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.8); }
+        .modal-content { background-color: #1a1a1a; margin: 10% auto; padding: 25px; border-radius: 15px; width: 90%; max-width: 400px; color: white; border: 1px solid #333; }
+        .modal-content h2 { margin-top: 0; font-size: 1.2rem; margin-bottom: 20px; }
+        
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; font-size: 0.7rem; color: #888; margin-bottom: 5px; text-transform: uppercase; }
+        .form-group input { width: 100%; padding: 12px; background: #111; border: 1px solid #333; border-radius: 8px; color: white; box-sizing: border-box; }
+        
+        .modal-footer { display: flex; gap: 10px; margin-top: 20px; }
+        .btn-save { flex: 2; background: #2563eb; color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; }
+        .btn-cancel { flex: 1; background: #333; color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; }
+        
+        /* ปุ่มจัดการใน Card */
+        .admin-tools { display: none; margin-top: 10px; border-top: 1px solid #333; padding-top: 10px; }
+        .btn-edit { color: #ffcc00; cursor: pointer; margin-right: 15px; }
+        .btn-delete { color: #ff4444; cursor: pointer; }
+    </style>
 </head>
 <body>
+
+    <div class="dev-controls">
+        <button class="btn-dev" onclick="toggleDevMode()"><i class="fas fa-code"></i> DEV MODE</button>
+        <button id="add-btn" class="btn-dev" style="display:none; margin-left:10px;" onclick="openModal()">+ ADD MEMBER</button>
+    </div>
+
     <div class="container">
         <header>
             <h1>MYLIST WEBTEST</h1>
@@ -18,6 +47,35 @@
 
         <div id="member-display" class="member-grid">
             <p>กำลังโหลดข้อมูล...</p>
+        </div>
+    </div>
+
+    <div id="memberModal" class="modal">
+        <div class="modal-content">
+            <h2 id="modalTitle">เพิ่มสมาชิกใหม่</h2>
+            <input type="hidden" id="edit-id">
+            
+            <div class="form-group">
+                <label>ชื่อ (NAME)</label>
+                <input type="text" id="m-name" placeholder="เช่น สมชาย สายซิ่ง">
+            </div>
+            <div class="form-group">
+                <label>ตำแหน่ง / ยศ (ROLE)</label>
+                <input type="text" id="m-rank" placeholder="เช่น หัวหน้าแก๊ง">
+            </div>
+            <div class="form-group">
+                <label>ลิงก์รูปภาพ (IMAGE URL)</label>
+                <input type="text" id="m-img" placeholder="https://...">
+            </div>
+            <div class="form-group">
+                <label>FACEBOOK URL (ไม่บังคับ)</label>
+                <input type="text" id="m-fb" placeholder="https://facebook.com/...">
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn-cancel" onclick="closeModal()">ยกเลิก</button>
+                <button class="btn-save" onclick="saveMember()">บันทึก</button>
+            </div>
         </div>
     </div>
 
@@ -35,7 +93,9 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        // ดึงข้อมูลแบบ Real-time
+        let isDevMode = false;
+
+        // ดึงข้อมูล Real-time
         db.ref('members').on('value', (snapshot) => {
             const data = snapshot.val();
             const display = document.getElementById('member-display');
@@ -49,20 +109,83 @@
             
             display.innerHTML = membersArray.map(m => `
                 <div class="card">
-                    <div class="rank-badge badge-${m.rank.toLowerCase()}">${m.rank}</div>
+                    <div class="rank-badge badge-${(m.rank || 'member').toLowerCase()}">${m.rank}</div>
                     <div class="profile-box">
-                        <img src="https://via.placeholder.com/80/222/fff?text=AWAKE" alt="avatar">
+                        <img src="${m.img || 'https://via.placeholder.com/80'}" alt="avatar">
                     </div>
                     <div class="info">
                         <h3>${m.name}</h3>
-                        <p class="rank-label label-${m.rank.toLowerCase()}">${m.rank}</p>
+                        <p class="rank-label label-${(m.rank || 'member').toLowerCase()}">${m.rank}</p>
                     </div>
-                    <a href="${m.facebook}" target="_blank" class="fb-link">
+                    <a href="${m.fb}" target="_blank" class="fb-link">
                         <i class="fab fa-facebook"></i> Facebook
                     </a>
+                    <div class="admin-tools" style="display: ${isDevMode ? 'block' : 'none'}">
+                        <span class="btn-edit" onclick="editMember('${m.id}', '${m.name}', '${m.rank}', '${m.img}', '${m.fb}')"><i class="fas fa-edit"></i> แก้ไข</span>
+                        <span class="btn-delete" onclick="deleteMember('${m.id}')"><i class="fas fa-trash"></i> ลบ</span>
+                    </div>
                 </div>
             `).join('');
         });
+
+        // ฟังก์ชันเปิด/ปิด DEV MODE
+        function toggleDevMode() {
+            isDevMode = !isDevMode;
+            document.getElementById('add-btn').style.display = isDevMode ? 'inline-block' : 'none';
+            const tools = document.querySelectorAll('.admin-tools');
+            tools.forEach(t => t.style.display = isDevMode ? 'block' : 'none');
+            alert(isDevMode ? "เข้าสู่โหมดนักพัฒนา" : "ออกจากโหมดนักพัฒนา");
+        }
+
+        // ระบบ Modal และ Form
+        function openModal() {
+            document.getElementById('modalTitle').innerText = "เพิ่มสมาชิกใหม่";
+            document.getElementById('edit-id').value = "";
+            document.getElementById('m-name').value = "";
+            document.getElementById('m-rank').value = "";
+            document.getElementById('m-img').value = "";
+            document.getElementById('m-fb').value = "";
+            document.getElementById('memberModal').style.display = 'block';
+        }
+
+        function closeModal() {
+            document.getElementById('memberModal').style.display = 'none';
+        }
+
+        // บันทึกข้อมูล (ทั้งเพิ่มและแก้ไข)
+        function saveMember() {
+            const id = document.getElementById('edit-id').value;
+            const memberData = {
+                name: document.getElementById('m-name').value,
+                rank: document.getElementById('m-rank').value,
+                img: document.getElementById('m-img').value,
+                fb: document.getElementById('m-fb').value
+            };
+
+            if (id) {
+                db.ref('members/' + id).update(memberData).then(closeModal);
+            } else {
+                db.ref('members').push(memberData).then(closeModal);
+            }
+        }
+
+        // แก้ไข
+        function editMember(id, name, rank, img, fb) {
+            document.getElementById('modalTitle').innerText = "แก้ไขข้อมูลสมาชิก";
+            document.getElementById('edit-id').value = id;
+            document.getElementById('m-name').value = name;
+            document.getElementById('m-rank').value = rank;
+            document.getElementById('m-img').value = img;
+            document.getElementById('m-fb').value = fb;
+            document.getElementById('memberModal').style.display = 'block';
+        }
+
+        // ลบ
+        function deleteMember(id) {
+            if (confirm("ยืนยันการลบสมาชิกนี้?")) {
+                db.ref('members/' + id).remove();
+            }
+        }
     </script>
 </body>
 </html>
