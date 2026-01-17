@@ -3,44 +3,53 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AWAKE 2K26 - Members</title>
+    <title>AWAKE 2K26 - Member List</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-database-compat.js"></script>
 </head>
 <body>
     <div class="container">
         <header>
             <h1>AWAKE 2K26</h1>
             <p>@REAL 2026 STAY ALONG 588</p>
-            <div class="search-bar">
-                <input type="text" placeholder="ค้นหาชื่อสมาชิก...">
-                <button>ค้นหา</button>
-            </div>
         </header>
 
         <div id="member-display" class="member-grid">
-            </div>
-
-        <div style="margin-top: 50px;">
-            <a href="admin.html" style="color: #555; text-decoration: none; font-size: 12px;">จัดการระบบหลังบ้าน</a>
+            <p>กำลังโหลดข้อมูล...</p>
         </div>
     </div>
 
     <script>
-        function renderMembers() {
-            const members = JSON.parse(localStorage.getItem('awake_members')) || [];
+        // --- ใส่ Firebase Config ของคุณตรงนี้ ---
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_PROJECT.firebaseapp.com",
+            databaseURL: "https://YOUR_PROJECT.firebaseio.com",
+            projectId: "YOUR_PROJECT",
+            storageBucket: "YOUR_PROJECT.appspot.com",
+            messagingSenderId: "YOUR_ID",
+            appId: "YOUR_APP_ID"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        // ดึงข้อมูลแบบ Real-time
+        db.ref('members').on('value', (snapshot) => {
+            const data = snapshot.val();
             const display = document.getElementById('member-display');
             
-            if (members.length === 0) {
-                display.innerHTML = "<p>ยังไม่มีข้อมูลสมาชิก</p>";
+            if (!data) {
+                display.innerHTML = "<p>ยังไม่มีสมาชิกในระบบ</p>";
                 return;
             }
 
-            display.innerHTML = members.map(m => `
+            const membersArray = Object.keys(data).map(key => ({ id: key, ...data[key] }));
+            
+            display.innerHTML = membersArray.map(m => `
                 <div class="card">
-                    <div class="rank-badge badge-${m.rank.toLowerCase()}">
-                        <i class="fas fa-crown"></i> ${m.rank}
-                    </div>
+                    <div class="rank-badge badge-${m.rank.toLowerCase()}">${m.rank}</div>
                     <div class="profile-box">
                         <img src="https://via.placeholder.com/80/222/fff?text=AWAKE" alt="avatar">
                     </div>
@@ -53,8 +62,7 @@
                     </a>
                 </div>
             `).join('');
-        }
-        window.onload = renderMembers;
+        });
     </script>
 </body>
 </html>
