@@ -3,100 +3,58 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GANG MEMBER LIST</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r121/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/vanta@latest/dist/vanta.net.min.js"></script>
+    <title>AWAKE 2K26 - Members</title>
+    <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <style>
-        #vanta-canvas { position: fixed; width: 100%; height: 100vh; top: 0; left: 0; z-index: -1; }
-        .glass { background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(15px); border: 1px solid rgba(255, 255, 255, 0.1); }
-        .member-card:hover { border-color: #3b82f6; box-shadow: 0 0 20px rgba(59, 130, 246, 0.5); }
-    </style>
 </head>
-<body class="text-white">
-    <div id="vanta-canvas"></div>
-    
-    <div id="youtube-player" class="hidden"></div>
+<body>
+    <div class="container">
+        <header>
+            <h1>AWAKE 2K26</h1>
+            <p>@REAL 2026 STAY ALONG 588</p>
+            <div class="search-bar">
+                <input type="text" placeholder="ค้นหาชื่อสมาชิก...">
+                <button>ค้นหา</button>
+            </div>
+        </header>
 
-    <div class="container mx-auto px-4 py-10 relative z-10">
-        <div class="text-center mb-12">
-            <h1 class="text-6xl font-black italic tracking-tighter uppercase text-blue-500 drop-shadow-lg">GANG NAME</h1>
-            <p class="text-gray-400 mt-2">EST. 2024 | TOTAL MEMBERS</p>
-        </div>
+        <div id="member-display" class="member-grid">
+            </div>
 
-        <div id="member-grid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6"></div>
-
-        <div class="mt-12 flex justify-center items-center space-x-6">
-            <button onclick="changePage(-1)" class="glass px-8 py-2 rounded-full hover:bg-blue-600 transition">BACK</button>
-            <span id="page-number" class="text-xl font-bold italic">PAGE 1 / 1</span>
-            <button onclick="changePage(1)" class="glass px-8 py-2 rounded-full hover:bg-blue-600 transition">NEXT</button>
+        <div style="margin-top: 50px;">
+            <a href="admin.html" style="color: #555; text-decoration: none; font-size: 12px;">จัดการระบบหลังบ้าน</a>
         </div>
     </div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+    <script>
+        function renderMembers() {
+            const members = JSON.parse(localStorage.getItem('awake_members')) || [];
+            const display = document.getElementById('member-display');
+            
+            if (members.length === 0) {
+                display.innerHTML = "<p>ยังไม่มีข้อมูลสมาชิก</p>";
+                return;
+            }
 
-        const firebaseConfig = {
-            apiKey: "YOUR_API_KEY",
-            databaseURL: "YOUR_DATABASE_URL",
-            projectId: "YOUR_PROJECT_ID",
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app);
-
-        let members = [];
-        let currentPage = 1;
-        const perPage = 20;
-
-        // ดึงข้อมูลสมาชิกและเพลง
-        onValue(ref(db, '/'), (snapshot) => {
-            const data = snapshot.val();
-            members = data?.members ? Object.values(data.members) : [];
-            if(data?.settings?.musicUrl) playMusic(data.settings.musicUrl);
-            render();
-        });
-
-        function render() {
-            const grid = document.getElementById('member-grid');
-            grid.innerHTML = '';
-            const start = (currentPage - 1) * perPage;
-            const paginated = members.slice(start, start + perPage);
-
-            paginated.forEach(m => {
-                grid.innerHTML += `
-                    <div class="glass p-6 rounded-2xl text-center member-card transition-all duration-300 transform hover:-translate-y-2">
-                        <div class="w-24 h-24 mx-auto mb-4 rounded-full border-4 border-blue-500 overflow-hidden shadow-inner">
-                            <img src="${m.img || 'https://via.placeholder.com/150'}" class="w-full h-full object-cover">
-                        </div>
-                        <h3 class="font-black text-xl mb-3 truncate italic underline decoration-blue-500">${m.name}</h3>
-                        <div class="flex justify-center space-x-4">
-                            <a href="${m.facebook}" target="_blank" class="text-blue-400 hover:text-white text-2xl"><i class="fab fa-facebook"></i></a>
-                        </div>
-                    </div>`;
-            });
-            document.getElementById('page-number').innerText = `PAGE ${currentPage} / ${Math.ceil(members.length/perPage) || 1}`;
+            display.innerHTML = members.map(m => `
+                <div class="card">
+                    <div class="rank-badge badge-${m.rank.toLowerCase()}">
+                        <i class="fas fa-crown"></i> ${m.rank}
+                    </div>
+                    <div class="profile-box">
+                        <img src="https://via.placeholder.com/80/222/fff?text=AWAKE" alt="avatar">
+                    </div>
+                    <div class="info">
+                        <h3>${m.name}</h3>
+                        <p class="rank-label label-${m.rank.toLowerCase()}">${m.rank}</p>
+                    </div>
+                    <a href="${m.facebook}" target="_blank" class="fb-link">
+                        <i class="fab fa-facebook"></i> Facebook
+                    </a>
+                </div>
+            `).join('');
         }
-
-        window.changePage = (n) => {
-            currentPage = Math.max(1, Math.min(Math.ceil(members.length/perPage), currentPage + n));
-            render();
-        };
-
-        function playMusic(url) {
-            const videoId = url.split('v=')[1]?.split('&')[0] || url.split('/').pop();
-            document.getElementById('youtube-player').innerHTML = `<iframe src="https://www.youtube.com/embed/${videoId}?autoplay=1&loop=1&playlist=${videoId}" allow="autoplay"></iframe>`;
-        }
-
-        VANTA.NET({
-            el: "#vanta-canvas",
-            mouseControls: true,
-            color: 0x3b82f6,
-            backgroundColor: 0x050505,
-            points: 15.00
-        });
+        window.onload = renderMembers;
     </script>
 </body>
 </html>
