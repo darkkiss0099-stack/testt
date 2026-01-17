@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin - Manage Members</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-8">
+    <div class="max-w-xl mx-auto bg-white p-8 rounded-xl shadow-lg">
+        <h2 class="text-2xl font-bold mb-6">เพิ่มสมาชิกใหม่</h2>
+        <div class="space-y-4">
+            <input id="name" type="text" placeholder="ชื่อสมาชิก" class="w-full border p-2 rounded">
+            <input id="fb" type="text" placeholder="Link Facebook" class="w-full border p-2 rounded">
+            <input id="img" type="text" placeholder="Link รูปภาพ (URL)" class="w-full border p-2 rounded">
+            <button onclick="addMember()" class="w-full bg-green-600 text-white py-2 rounded font-bold">บันทึกข้อมูล</button>
+        </div>
+        <hr class="my-8">
+        <h2 class="text-xl font-bold mb-4">รายชื่อทั้งหมด</h2>
+        <div id="admin-list" class="space-y-2"></div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getDatabase, ref, push, set, onValue, remove } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+        const firebaseConfig = { /* ใช้ชุดเดียวกับด้านบน */ };
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        window.addMember = () => {
+            const name = document.getElementById('name').value;
+            const facebook = document.getElementById('fb').value;
+            const img = document.getElementById('img').value;
+            
+            if(name && facebook) {
+                const newListRef = push(ref(db, 'members'));
+                set(newListRef, { id: newListRef.key, name, facebook, img });
+                alert("เพิ่มแล้ว!");
+            }
+        };
+
+        onValue(ref(db, 'members'), (snapshot) => {
+            const list = document.getElementById('admin-list');
+            list.innerHTML = '';
+            snapshot.forEach((child) => {
+                const m = child.val();
+                list.innerHTML += `
+                    <div class="flex justify-between items-center border-b py-2">
+                        <span>${m.name}</span>
+                        <button onclick="deleteMember('${m.id}')" class="text-red-500 text-sm">ลบ</button>
+                    </div>
+                `;
+            });
+        });
+
+        window.deleteMember = (id) => {
+            if(confirm('ลบรายชื่อนี้?')) remove(ref(db, `members/${id}`));
+        };
+    </script>
+</body>
+</html>
